@@ -7445,7 +7445,7 @@ async function runShots() {
       );
       vw.webContents.send('config', cfg);
       // Geçmiş biriktiren ve yavaş kurulan modlar daha uzun bekler
-      await wait(m.engine || /^(spectrogram|ribbon|wave3d|terrain|galaxy|attractorfield|fireworks|flowfield|flock|ropes)$/.test(m.id) ? 3200 : 1800);
+      await wait(m.engine || /^(spectrogram|ribbon|wave3d|terrain|galaxy|attractorfield|fireworks|flowfield|flock|ropes|stereotrails)$/.test(m.id) ? 3200 : 1800);
       const img = await vw.webContents.capturePage();
       tiles.push({ img: await sharp(img.toPNG()).resize(TW, TH).png().toBuffer(), name: label(m.label) });
     }
