@@ -3097,17 +3097,58 @@ function syncOscOut() {
 /* Ana sürecin bildikleri: tempo panelden (mcpLive), sahne adı ve ekrandaki
    görselleştirici/arkaplan türü ayardan. Yığın açıkken tür ilk görünür
    katmandan okunuyor (layers.js currentType), Studio ve MCP gibi. */
+/* Panelin saat iletisi (tempo:clock) son fazı, çalmayı, karartmayı ve
+   desteyi bırakır. Ölçer karesi bunları da taşır; imza değişmediyse
+   planlayıcı yeniden yollamaz. */
+let oscLive = {
+  phase: null, beat: 0, beatsPerBar: 4, bpm: 0, confidence: 0,
+  playing: false, blackout: false, timeline: false, deck: null,
+};
+
+function oscTrackTitle(st) {
+  if (!st || !st.has || typeof st.title !== 'string' || !st.title) return '';
+  return st.artist ? st.artist + ' — ' + st.title : st.title;
+}
+
+function oscLayers(cfg) {
+  const layers = cfg && Array.isArray(cfg.layers) ? cfg.layers : [];
+  return layers.slice(0, 32).map((l) => ({
+    name: l && typeof l.name === 'string' ? l.name : '',
+    opacity: l && Number.isFinite(Number(l.opacity)) ? Number(l.opacity) : 1,
+    enabled: !l || l.enabled !== false,
+  }));
+}
+
 function oscOutContext() {
   const cfg = currentConfig || {};
   const scene = (cfg.scenes || []).find((s) => s && s.id === cfg._activeSceneId);
   const L = stackHelpers();
   const typeOf = (section) => (L ? L.currentType(cfg, section) : cfg[section] && cfg[section].type) || '';
+  const bg = cfg.background || {};
+  const bpm = Number.isFinite(oscLive.bpm) && oscLive.bpm > 0 ? oscLive.bpm : mcpLive.bpm;
+  const confidence = Number.isFinite(oscLive.confidence) ? oscLive.confidence : mcpLive.confidence;
   return {
-    bpm: mcpLive.bpm,
-    confidence: mcpLive.confidence,
+    bpm,
+    confidence,
+    phase: oscLive.phase,
+    beat: oscLive.beat,
+    beatsPerBar: oscLive.beatsPerBar || (cfg.autovj && cfg.autovj.beatsPerBar) || 4,
+    playing: oscLive.playing === true,
     scene: scene && typeof scene.name === 'string' ? scene.name : '',
     visualizer: typeOf('visualizer'),
     background: typeOf('background'),
+    colors: bg.gradient && Array.isArray(bg.gradient.colors) ? bg.gradient.colors : [],
+    show: {
+      blackout: oscLive.blackout === true,
+      palette: typeof bg.colorMode === 'string' ? bg.colorMode : '',
+      brightness: bg.gradient && Number.isFinite(bg.gradient.brightness) ? bg.gradient.brightness : 1,
+      transition: cfg.transition && typeof cfg.transition.type === 'string' ? cfg.transition.type : '',
+      autovj: !!(cfg.autovj && cfg.autovj.enabled),
+      track: oscTrackTitle(mediaSession.current()),
+      timeline: oscLive.timeline === true,
+      layers: oscLayers(cfg),
+      deck: oscLive.deck,
+    },
   };
 }
 
@@ -3291,10 +3332,43 @@ ipcMain.handle('oscout:status', () => oscOut.status());
 ipcMain.handle('oscout:sync', () => syncOscOut());
 /* Tempo motorunun vuruşu panelden geliyor (autovj.js). Yalnız panel
    penceresinden kabul edilir: vuruş başka bir sayfadan uydurulamasın. */
+function noteOscLive(info) {
+  if (!info || typeof info !== 'object') return;
+  if (Number.isFinite(info.phase)) oscLive.phase = info.phase;
+  if (Number.isFinite(info.beat)) oscLive.beat = info.beat;
+  if (Number.isFinite(info.beatsPerBar)) oscLive.beatsPerBar = info.beatsPerBar;
+  if (Number.isFinite(info.bpm)) oscLive.bpm = info.bpm;
+  if (Number.isFinite(info.confidence)) oscLive.confidence = info.confidence;
+  if (typeof info.playing === 'boolean') oscLive.playing = info.playing;
+  const show = info.show && typeof info.show === 'object' ? info.show : null;
+  if (show) {
+    if (typeof show.blackout === 'boolean') oscLive.blackout = show.blackout;
+    if (typeof show.timeline === 'boolean') oscLive.timeline = show.timeline;
+    if (show.deck && typeof show.deck === 'object') oscLive.deck = show.deck;
+  }
+}
+
 ipcMain.on('tempo:beat', (e, info) => {
   if (!adminWin || adminWin.isDestroyed() || e.sender !== adminWin.webContents) return;
   if (!currentConfig || !currentConfig.oscOut || !currentConfig.oscOut.enabled) return;
+  noteOscLive(info);
   oscOut.beat(currentConfig.oscOut, info);
+});
+/* Faz, çalma ve gösteri durumu. Vuruş kenarı tempo:beat'te kalır. */
+ipcMain.on('tempo:clock', (e, info) => {
+  if (!adminWin || adminWin.isDestroyed() || e.sender !== adminWin.webContents) return;
+  if (!currentConfig || !currentConfig.oscOut || !currentConfig.oscOut.enabled) return;
+  noteOscLive(info);
+  const track = oscTrackTitle(mediaSession.current());
+  const show = Object.assign({}, info && info.show, { track });
+  oscOut.clock(currentConfig.oscOut, Object.assign({}, info, { show }));
+});
+/* Vuruş, çizim karesinden. Yalnız ölçeri kabul edilen pencereden. */
+ipcMain.on('osc-hit', (e, hits) => {
+  const primary = meterWindow();
+  if (primary && e.sender !== primary.webContents) return;
+  if (!currentConfig || !currentConfig.oscOut || !currentConfig.oscOut.enabled) return;
+  oscOut.hit(currentConfig.oscOut, hits);
 });
 ipcMain.handle('openrgb:status', () => openrgb.status());
 ipcMain.handle('openrgb:sync', () => syncOpenRgb({ retry: true }));

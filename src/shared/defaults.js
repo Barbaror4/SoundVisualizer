@@ -1073,6 +1073,9 @@
       hits: true,
       tempo: true,
       state: true,
+      analysis: true, // tayf, perde, akor ve 16 bant
+      latencyMs: 0, // pozitif: saat geri kalır (geç hoparlör)
+      extra: '', // ek hedefler, satır başına host:port ya da [ipv6]:port
     },
 
     // ------------------------------------------------------------------

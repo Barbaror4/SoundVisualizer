@@ -640,10 +640,29 @@
      bir değeri baştan geri çeviriyor ki kullanıcı ne olduğunu görsün. */
   const OSC_HOST = /^(?=.{1,253}$)[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)*$/;
   const OSC_PREFIX = /^(\/[A-Za-z0-9_-]{1,32}){0,4}$/;
+  /* Ana süreçteki validHost ile aynı kabul: IPv4, IPv6 ya da ana bilgisayar
+     adı. Bölge kimliği (%eth0) yok. Köşeli parantez yalnız alanda soyulur. */
+  function oscHostOk(v) {
+    let h = String(v || '').trim();
+    if (h.startsWith('[') && h.endsWith(']')) h = h.slice(1, -1);
+    if (!h || h.length > 253 || h.includes('%')) return false;
+    if (OSC_HOST.test(h)) return true;
+    if (!/^[0-9A-Fa-f:]+$/.test(h) || !h.includes(':')) return false;
+    const halves = h.split('::');
+    if (halves.length > 2) return false;
+    const groups = h.split(':');
+    if (groups.length > 8) return false;
+    return groups.every((g) => g.length <= 4);
+  }
 
   function oscOutNodes(cfg) {
     const el = P().el;
     const o = cfg.oscOut;
+    /* Eski ayar dosyasında bu alanlar yok. Ana süreç yokluğu "açık" sayar;
+       kutu da öyle görünmeli. */
+    if (o.analysis == null) o.analysis = true;
+    if (o.latencyMs == null) o.latencyMs = 0;
+    if (o.extra == null) o.extra = '';
     const nodes = [];
     const sync = async () => {
       P().push(true);
@@ -670,8 +689,9 @@
     });
 
     nodes.push(toggle('OSC Çıkışı Etkin', 'enabled'));
-    nodes.push(P().row('Hedef Adres', text(o.host, (v) => OSC_HOST.test(v), (v) => { o.host = v; },
-      'Adres bir IPv4 adresi ya da ana bilgisayar adı olmalı.')));
+    nodes.push(P().row('Hedef Adres', text(o.host, oscHostOk, (v) => {
+      o.host = v.startsWith('[') && v.endsWith(']') ? v.slice(1, -1) : v;
+    }, 'Adres bir IPv4, IPv6 ya da ana bilgisayar adı olmalı.')));
     nodes.push(P().row('Hedef Port', el('input', {
       class: 'p-in p-num', type: 'number', min: '1', max: '65535', value: o.port,
       onchange: (e) => {
@@ -696,10 +716,28 @@
     })));
     nodes.push(P().row('Adres Öneki', text(o.prefix, (v) => OSC_PREFIX.test(v.replace(/\/+$/, '')),
       (v) => { o.prefix = v.replace(/\/+$/, ''); }, 'Önek /cayadev gibi olmalı: en çok dört parça, harf, rakam, - ve _.')));
+    nodes.push(P().row('Saat Gecikmesi (ms)', el('input', {
+      class: 'p-in p-num', type: 'number', min: '-2000', max: '2000', step: '1', value: o.latencyMs || 0,
+      onchange: (e) => {
+        const n = Number(e.target.value);
+        if (!Number.isInteger(n) || n < -2000 || n > 2000) {
+          P().toast(T('Gecikme -2000 ile 2000 ms arasında bir tam sayı olmalı.'), 'err');
+          e.target.value = String(o.latencyMs || 0);
+          return;
+        }
+        o.latencyMs = n;
+        sync();
+      },
+    })));
+    nodes.push(P().row('Ek Hedefler', el('textarea', {
+      class: 'p-in', rows: '3', spellcheck: 'false', value: o.extra || '',
+      onchange: (e) => { o.extra = e.target.value; sync(); },
+    })));
     nodes.push(toggle('Ses Seviyeleri', 'levels'));
     nodes.push(toggle('Davul Vuruşları', 'hits'));
     nodes.push(toggle('Tempo ve Vuruş Saati', 'tempo'));
     nodes.push(toggle('Sahne ve Mod Değişimleri', 'state'));
+    nodes.push(toggle('Çözümleme ve Tayf', 'analysis'));
 
     const st = oscOutState || {};
     const stBox = el('label', { class: 'lbl studio-status ' + (st.error ? 'err' : st.running ? 'ok' : '') });
@@ -720,11 +758,11 @@
     nodes.push(el('div', { class: 'ctrl' }, [el('div', { class: 'row' }, [stBox])]));
     nodes.push(el('div', {
       class: 'studio-note',
-      text: 'Adresler önekle başlar: /level, /bass, /mid, /treble (0..1); /hit/kick, /hit/snare, /hit/hat (vuruş şiddeti); /tempo/bpm, /tempo/confidence, /tempo/beat (ölçüdeki vuruş ve ölçü uzunluğu); /scene, /visualizer, /background, /milkdrop/preset (adlar).',
+      text: 'Seviye, bas, mid ve tiz tek pakette gider. Vuruştan sonra 0 gelir. Saat: BPM, faz (0..1), ölçü fazı, ölçü başı, çalıyor ya da durdu. Ayrıntılı adres ağacı README dosyasında.',
     }));
     nodes.push(el('div', {
       class: 'studio-note',
-      text: 'Ses seviyeleri ve vuruşlar görselleştirici penceresi açıkken gider; tempo ve vuruş saati panelin tempo motorundan gelir.',
+      text: 'Ek hedefler satır satır: 10.0.0.8:9001 ya da [::1]:9001. Pozitif gecikme saati geri alır; hoparlör geç kalıyorsa ışık onu bekler.',
     }));
     return nodes;
   }

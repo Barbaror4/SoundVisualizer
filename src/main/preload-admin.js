@@ -185,6 +185,7 @@ contextBridge.exposeInMainWorld('api', {
   oscOutSync: () => ipcRenderer.invoke('oscout:sync'),
   onOscOutStatus: (cb) => ipcRenderer.on('oscout-status', (e, d) => cb(d)),
   reportTempoBeat: (info) => ipcRenderer.send('tempo:beat', info),
+  reportTempoClock: (info) => ipcRenderer.send('tempo:clock', info),
 
   // Güncelleme denetimi (#640)
   updatesState: () => ipcRenderer.invoke('updates:state'),

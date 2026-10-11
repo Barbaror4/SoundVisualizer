@@ -4604,6 +4604,8 @@
       btn.classList.toggle('on', !!blackoutSaved);
       window.SVIcons.set(btn, blackoutSaved ? 'sun' : 'moon', blackoutSaved ? 'Karartmayı Kaldır' : 'Karart');
     }
+    window.SVShow = window.SVShow || {};
+    window.SVShow.blackout = !!blackoutSaved;
     push(true);
     render();
   }
