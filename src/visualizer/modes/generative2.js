@@ -1047,6 +1047,8 @@
       const speed = Math.sqrt(2 * ST_GRAVITY * h);
       this.px[i] = pan * 0.05 + (this.rand() - 0.5) * 0.02;
       this.py[i] = 0;
+      this.ox[i] = this.px[i];
+      this.oy[i] = this.py[i];
       this.vx[i] = Math.sin(ang) * speed;
       this.vy[i] = Math.cos(ang) * speed;
       this.band[i] = k;
@@ -1107,21 +1109,27 @@
         }
       }
 
-      // Fizik ve kovalara sayma
-      const counts = this.counts;
-      counts.fill(0);
+      // Fizik her karede. Tam ekran iz + parlama GPU'da kayda göre yavaş:
+      // kilitsiz ölçümde saniyede yüzlerce kez boyamak kuyruk bırakıyor ve
+      // bu kuyruk SONRAKİ sahnenin ilk saniyelerine yazılıyordu. 120 Hz
+      // boyama yeter; 60 ve 75 Hz'de her kare yine boyanır.
+      const paint = this._paintT == null || t - this._paintT >= 1 / 120;
       const halfW = W / H / 2 + 0.05;
       for (let i = 0; i < ST_POOL; i++) {
         if (!this.alive[i]) continue;
-        this.ox[i] = this.px[i];
-        this.oy[i] = this.py[i];
         this.vy[i] -= ST_GRAVITY * step;
         this.px[i] += this.vx[i] * step;
         this.py[i] += this.vy[i] * step;
-        if (this.py[i] < 0 || this.px[i] < -halfW || this.px[i] > halfW) {
-          this.alive[i] = 0;
-          continue;
-        }
+        if (this.py[i] < 0 || this.px[i] < -halfW || this.px[i] > halfW) this.alive[i] = 0;
+      }
+      if (!paint) return;
+      this._paintT = t;
+
+      // Kovalara sayma
+      const counts = this.counts;
+      counts.fill(0);
+      for (let i = 0; i < ST_POOL; i++) {
+        if (!this.alive[i]) continue;
         const key = this.band[i] * 2 + (this.vy[i] < 0 ? 1 : 0);
         this.key[i] = key;
         counts[key]++;
@@ -1158,6 +1166,8 @@
             const i = this.order[j];
             tc.moveTo(cx + this.ox[i] * H, floor - this.oy[i] * H);
             tc.lineTo(cx + this.px[i] * H, floor - this.py[i] * H);
+            this.ox[i] = this.px[i];
+            this.oy[i] = this.py[i];
           }
           tc.stroke();
         }
