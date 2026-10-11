@@ -2615,6 +2615,7 @@
           // --- Dalga / çizgi biçimi (gelişmiş) ---
           { type: 'slider', path: 'visualizer.lineWidth', label: 'Çizgi Kalınlığı', min: 1, max: 12, step: 0.5, show: isWaveMode, group: 'Dalga Biçimi', advanced: true },
           { type: 'slider', path: 'visualizer.thickness', label: 'Genlik / Dolgu', min: 0.1, max: 1, step: 0.02, percent: true, show: () => MC().is('visualizer', v.type, 'thick'), group: 'Dalga Biçimi', advanced: true },
+          { type: 'slider', path: 'visualizer.trailHeight', label: 'Yükseklik', min: 0.4, max: 3, step: 0.05, percent: true, show: () => v.type === 'stereotrails', group: 'Dalga Biçimi', advanced: true },
 
           // --- Frekans aralığı (gelişmiş) ---
           { type: 'slider', path: 'visualizer.minFreq', label: 'Min Frekans (Hz)', min: 20, max: 500, step: 5, show: isBandMode, group: 'Frekans Aralığı', advanced: true },

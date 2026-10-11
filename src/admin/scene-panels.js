@@ -1542,6 +1542,9 @@
       if (MC().is('visualizer', l.type, 'thick')) {
         out.push(miniSlider('Genlik / Dolgu', () => getV('thickness', 0.5), (v) => setV('thickness', v), { min: 0.1, max: 1, step: 0.02, percent: true, def: 0.5}));
       }
+      if (l.type === 'stereotrails') {
+        out.push(miniSlider('Yükseklik', () => getV('trailHeight', 1), (v) => setV('trailHeight', v), { min: 0.4, max: 3, step: 0.05, percent: true, def: 1 }));
+      }
 
       return out;
     }

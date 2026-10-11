@@ -968,6 +968,222 @@
     dispose() { this.n = 0; }
   }
 
+  // ==========================================================================
+  // STEREO İZLER — her bant stereo görüntüdeki yerinden fışkırır
+  // ==========================================================================
+  /* Tabanda bir çeşme. Her frekans bandı kendi parçacıklarını atıyor:
+     fırlatma açısı bandın sol-sağ konumundan, saçılması dağınıklığından
+     (SVStereoBands), sayısı ve hızı bandın seviyesinden. Ortada miksli bir
+     davul dik bir sütun çizer, sola kaydırılmış bir gitar kendi yaylarını
+     sola eğer, iki yana yayılmış bir yankı yelpaze gibi açılır. Mono
+     kaynakta her şey dik çıkar; ölçüm de bunu söylüyor.
+
+     Seviye getBars'tan: bar sayısı, frekans aralığı ve Tayf Ölçümü
+     ayarlarının hepsi bu modda da işliyor. Stereo ölçüm aynı bant
+     kenarlarıyla yapılıyor (SVSpectrum.bandEdges), yoksa mel ya da bark
+     ölçeğinde seviye ile konum farklı bantlardan gelirdi.
+
+     Renk ve boy banda göre: bas birincil renkte, iri ve alçak; tiz ikincil
+     renkte, ince ve yüksek. Konum ve dağınıklık yumuşatılıyor: kısa bir
+     pencerede dar bir bandın ölçümü kare kare titriyor, çeşme savrulurdu.
+
+     Konum açıya eğriyle çevriliyor (|p|^0,6): müzikte bantların çoğu
+     ortaya yakın (önizlemenin örnek sesinde ±0,05..0,25), doğrusal eşlemede
+     ince bir stereo görüntü hiç eğilmiyordu. Uçlar yine tam sol ve tam sağ.
+     Çizim 'lighter' değil source-over: toplamalı karışım varsayılan açık
+     arkaplanda soluklaşıp kayboluyordu; ışıma SVGlow'dan geliyor. Çizgi
+     uçları 'butt': segmentler uç uca eklendiği için yuvarlak uç görünmüyor
+     ama her karede yüzlerce segmentte maliyeti var (Iris Xe, 1080p,
+     kilitsiz bench: yuvarlakla 118 ve 92 kare/sn, butt ile 124 ve 118).
+
+     Sabit havuz, halka sırasıyla en eskisinin üstüne yazılır. Çizim
+     bant × (yükselen/düşen) kovasına sayma sıralamasıyla gruplanıyor, kova
+     başına tek stroke. Kare başına dizi ayrılmıyor. */
+  const ST_POOL = 1800;
+  const ST_GRAVITY = 1.6; // yükseklik birimi (H) / sn²
+  const ST_TILT = 0.95; // tam sol/sağda dikeyden sapma (rad, ~54°)
+  const ST_SCATTER = 1.4; // tam dağınık bantta ek saçılma aralığı (rad)
+  const ST_CURVE = 0.6; // konumdan açıya eğri üssü
+
+  class StereoTrails {
+    constructor(canvas) {
+      this.canvas = canvas;
+      this.ctx = canvas.getContext('2d');
+      this.glow = new window.SVGlow();
+      this.rand = rng(0x5e7e0);
+      this.onset = onset(0.15);
+      this.sb = window.SVStereoBands ? new window.SVStereoBands.StereoBands() : null;
+      this.sbKey = '';
+      // Konum H biriminde: x tabanın ortasından, y tabandan yukarı
+      this.px = new Float32Array(ST_POOL);
+      this.py = new Float32Array(ST_POOL);
+      this.ox = new Float32Array(ST_POOL);
+      this.oy = new Float32Array(ST_POOL);
+      this.vx = new Float32Array(ST_POOL);
+      this.vy = new Float32Array(ST_POOL);
+      this.band = new Uint8Array(ST_POOL);
+      this.alive = new Uint8Array(ST_POOL);
+      this.key = new Uint8Array(ST_POOL);
+      this.order = new Uint16Array(ST_POOL);
+      this.head = 0;
+      this.nb = 0;
+      this.cols = [];
+      this.trail = null;
+      this.tctx = null;
+    }
+    resize() { this.trail = null; }
+    _bands(nb) {
+      this.nb = nb;
+      this.pan = new Float32Array(nb);
+      this.spread = new Float32Array(nb);
+      this.acc = new Float32Array(nb);
+      this.counts = new Int32Array(nb * 2);
+      this.alive.fill(0);
+      this.sbKey = '';
+    }
+    _emit(k, pan, ang, h) {
+      const i = this.head;
+      this.head = (i + 1) % ST_POOL;
+      const speed = Math.sqrt(2 * ST_GRAVITY * h);
+      this.px[i] = pan * 0.05 + (this.rand() - 0.5) * 0.02;
+      this.py[i] = 0;
+      this.ox[i] = this.px[i];
+      this.oy[i] = this.py[i];
+      this.vx[i] = Math.sin(ang) * speed;
+      this.vy[i] = Math.cos(ang) * speed;
+      this.band[i] = k;
+      this.alive[i] = 1;
+    }
+    draw(audio, cfg, t, dt) {
+      const ctx = this.ctx;
+      const W = this.canvas.width;
+      const H = this.canvas.height;
+      const v = cfg.visualizer;
+      const step = Math.min(0.05, dt || 0.016);
+      const sens = v.sensitivity || 1;
+      const nb = clamp(Math.round((v.barCount | 0) / 16), 4, 10);
+      if (this.nb !== nb) this._bands(nb);
+      if (!this.trail || this.trail.width !== W || this.trail.height !== H) {
+        this.trail = document.createElement('canvas');
+        this.trail.width = W;
+        this.trail.height = H;
+        this.tctx = this.trail.getContext('2d');
+      }
+
+      // Bant başına konum ve dağınıklık
+      const sb = this.sb;
+      if (sb) {
+        const sr = audio.sampleRate || 48000;
+        const scale = (v.spectrum && v.spectrum.scale) || 'log';
+        const key = nb + ':' + v.minFreq + ':' + v.maxFreq + ':' + scale + ':' + sr;
+        if (key !== this.sbKey) {
+          this.sbKey = key;
+          const S = window.SVSpectrum;
+          sb.configure(nb, v.minFreq, v.maxFreq, sr,
+            S ? S.bandEdges(nb, v.minFreq, Math.min(v.maxFreq, sr / 2), scale) : null);
+        }
+        sb.update(audio.timeL || audio.timeBytes, audio.timeR || audio.timeBytes, 128);
+      }
+      const follow = 1 - Math.exp(-step / 0.12);
+      const bars = audio.getBars(nb, v.minFreq, v.maxFreq, v.spectrum);
+      const power = 0.6 + 0.9 * clamp(v.thickness == null ? 0.42 : v.thickness, 0.1, 1);
+      // 1 bugünkü tepeyi verir (tavan 0.88 ekran). Üstü aynı yayı ekranın dışına taşır.
+      const reach = clamp(v.trailHeight == null ? 1 : v.trailHeight, 0.25, 15);
+      const kick = this.onset.push((audio.bass || 0) * sens, step);
+      for (let k = 0; k < nb; k++) {
+        const f = k / (nb - 1);
+        this.pan[k] += ((sb ? sb.pan[k] : 0) - this.pan[k]) * follow;
+        this.spread[k] += ((sb ? sb.spread[k] : 0) - this.spread[k]) * follow;
+        const e = clamp(bars[k] * sens, 0, 1);
+        this.acc[k] += 160 * e * Math.sqrt(e) * step;
+        const p = this.pan[k];
+        const tilt = (p < 0 ? -1 : 1) * Math.pow(Math.abs(p), ST_CURVE) * ST_TILT;
+        // Vuruşta bas bantları bir avuç fazladan atar
+        let burst = k < 2 && kick > 0 ? Math.round(5 + 9 * kick) : 0;
+        while (this.acc[k] >= 1 || burst > 0) {
+          if (burst > 0) burst--;
+          else this.acc[k] -= 1;
+          const ang = tilt + (this.rand() - 0.5) * (0.14 + this.spread[k] * ST_SCATTER);
+          const h = (0.25 + 0.55 * f) * power * (0.55 + 0.45 * e) * (0.85 + 0.3 * this.rand()) * reach;
+          this._emit(k, p, ang, Math.min(0.88 * reach, h));
+        }
+      }
+
+      // Fizik her karede. Tam ekran iz + parlama GPU'da kayda göre yavaş:
+      // kilitsiz ölçümde saniyede yüzlerce kez boyamak kuyruk bırakıyor ve
+      // bu kuyruk SONRAKİ sahnenin ilk saniyelerine yazılıyordu. 120 Hz
+      // boyama yeter; 60 ve 75 Hz'de her kare yine boyanır.
+      const paint = this._paintT == null || t - this._paintT >= 1 / 120;
+      const halfW = W / H / 2 + 0.05;
+      for (let i = 0; i < ST_POOL; i++) {
+        if (!this.alive[i]) continue;
+        this.vy[i] -= ST_GRAVITY * step;
+        this.px[i] += this.vx[i] * step;
+        this.py[i] += this.vy[i] * step;
+        if (this.py[i] < 0 || this.px[i] < -halfW || this.px[i] > halfW) this.alive[i] = 0;
+      }
+      if (!paint) return;
+      this._paintT = t;
+
+      // Kovalara sayma
+      const counts = this.counts;
+      counts.fill(0);
+      for (let i = 0; i < ST_POOL; i++) {
+        if (!this.alive[i]) continue;
+        const key = this.band[i] * 2 + (this.vy[i] < 0 ? 1 : 0);
+        this.key[i] = key;
+        counts[key]++;
+      }
+      // Sayma sıralaması: counts önce başlangıç, yerleştirmeden sonra bitiş
+      let sum = 0;
+      for (let q = 0; q < counts.length; q++) {
+        const c = counts[q];
+        counts[q] = sum;
+        sum += c;
+      }
+      for (let i = 0; i < ST_POOL; i++) {
+        if (this.alive[i]) this.order[counts[this.key[i]]++] = i;
+      }
+
+      // Çizim: iz tamponu saydama doğru söner, segmentler üstüne eklenir
+      const tc = this.tctx;
+      G.fadeTrail(tc, W, H, 0.05, this);
+      tc.globalCompositeOperation = 'source-over';
+      tc.lineCap = 'butt';
+      toneTable(v, cfg, t, nb, this.cols);
+      const cx = W / 2;
+      const floor = H;
+      const lw = Math.max(1, (v.lineWidth || 3) * 0.8 * (Math.min(W, H) / 1080));
+      let start = 0;
+      for (let q = 0; q < counts.length; q++) {
+        const end = counts[q];
+        if (end > start) {
+          const k = q >> 1;
+          tc.strokeStyle = rgba(this.cols[k], (q & 1) ? 0.45 : 0.9);
+          tc.lineWidth = lw * (2.4 - 1.6 * (k / (nb - 1)));
+          tc.beginPath();
+          for (let j = start; j < end; j++) {
+            const i = this.order[j];
+            tc.moveTo(cx + this.ox[i] * H, floor - this.oy[i] * H);
+            tc.lineTo(cx + this.px[i] * H, floor - this.py[i] * H);
+            this.ox[i] = this.px[i];
+            this.oy[i] = this.py[i];
+          }
+          tc.stroke();
+        }
+        start = end;
+      }
+      ctx.clearRect(0, 0, W, H);
+      ctx.drawImage(this.trail, 0, 0);
+      this.glow.apply(this.canvas, v.glow, 0.7);
+    }
+    dispose() {
+      this.trail = null;
+      this.tctx = null;
+      this.nb = 0;
+    }
+  }
+
   window.SVModes = window.SVModes || {};
   Object.assign(window.SVModes, {
     ridges: Ridges,
@@ -980,5 +1196,6 @@
     beatpads: BeatPads,
     levelmeter: LevelMeter,
     bounce: Bounce,
+    stereotrails: StereoTrails,
   });
 })();

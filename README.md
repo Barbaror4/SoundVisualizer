@@ -7,7 +7,7 @@
 ### Free, open-source music visualizer and VJ software for every screen you own
 
 Turn whatever your computer is playing — Spotify, YouTube, a DAW, a DJ set, a game — into
-audio-reactive visuals on one display or ten. A real **MilkDrop** engine, **59 visualizer modes**,
+audio-reactive visuals on one display or ten. A real **MilkDrop** engine, **60 visualizer modes**,
 layers and **40 GPU effects**, an **OBS overlay**, **Spout / Syphon**, **projection mapping**,
 **RGB lighting**, a **timeline and clip deck** for live shows, and **AI control over MCP**.
 
@@ -17,7 +17,7 @@ layers and **40 GPU effects**, an **OBS overlay**, **Spout / Syphon**, **project
 [![Downloads](https://img.shields.io/github/downloads/CaYatur/SoundVisualizer/total?label=downloads)](https://github.com/CaYatur/SoundVisualizer/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-e11d2a.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-111997.svg)](#download)
-[![Tests](https://img.shields.io/badge/tests-2925%20passing-2ea043.svg)](#tests)
+[![Tests](https://img.shields.io/badge/tests-2942%20passing-2ea043.svg)](#tests)
 [![Electron](https://img.shields.io/badge/Electron-43-47848F.svg)](https://www.electronjs.org/)
 
 <a href="https://github.com/CaYatur/SoundVisualizer/releases/latest"><img src="https://img.shields.io/badge/Download-Windows-0a84ff?style=for-the-badge" alt="Download for Windows" /></a>
@@ -39,7 +39,7 @@ layers and **40 GPU effects**, an **OBS overlay**, **Spout / Syphon**, **project
 
 <div align="center">
 
-| **59** visualizer modes | **43** backgrounds | **40** GPU effects | **18** scene transitions |
+| **60** visualizer modes | **43** backgrounds | **40** GPU effects | **18** scene transitions |
 |:---:|:---:|:---:|:---:|
 | **81** ready-made scenes | **98** formulas + **13** 3D solids | **42** built-in GLSL shaders | **58** colour palettes |
 | **10,347** MilkDrop presets tested | **96** MCP tools for AI agents | **17** layer blend modes | **2** languages (EN / TR) |
@@ -286,7 +286,7 @@ and 174 BPM signals), with tap tempo and a BPM lock shared by Auto VJ, the clip 
 
 <div align="center">
 
-**All 59 visualizer modes**
+**All 60 visualizer modes**
 
 ![Every visualizer mode](docs/screenshots/modes-visualizer.jpg)
 
@@ -300,7 +300,7 @@ These two sheets are generated from the mode catalogue itself, so a new mode app
 next time the screenshots are rendered. Any visualizer can sit on any background, and with layers
 you can stack as many of each as you like. Modes added since v3.1.4 are part of <kbd>3.1.5</kbd>.
 
-**Visualizer modes — 59**
+**Visualizer modes — 60**
 
 - **Basic** — Bars · Center · Blocks (LED equaliser) · Dot Matrix · City Skyline (buildings with lit
   windows)
@@ -311,7 +311,8 @@ you can stack as many of each as you like. Modes added since v3.1.4 are part of 
   rose curve) · Kaleidoscope · Vortex · Helix · Tunnel · Orb · Radar Chart
 - **Particles and events** — Particle · Fireworks (bursts on the beat) · Lightning (branching bolts
   on bass) · Bubbles · Liquid Drop (metaballs) · Ripple Grid (rings spreading on the beat) ·
-  Spectrogram · Confetti · Beat Pads · Bouncing Balls
+  Spectrogram · Confetti · Beat Pads · Bouncing Balls · Stereo Trails (each band launched from its
+  place in the stereo image)
 - **Generative systems** — Flow Field (particles steered by a noise field) · Flock (boids driven by
   the spectrum) · Voronoi · Truchet · Moiré · Wave Interference · Ropes (verlet physics kicked by
   onsets) · Galaxy · DNA Helix · Isometric City · Attractor Field (discrete maps from the formula
@@ -1624,7 +1625,7 @@ npm test
 npm start -- --smoke
 ```
 
-**2925 unit tests, all passing.** They are written to check answers, not to exercise lines:
+**2942 unit tests, all passing.** They are written to check answers, not to exercise lines:
 
 - **Formulas** are checked against values derived by hand from their definitions — Viviani's curve
   staying on its sphere, the torus tube radius, Chladni's m↔n antisymmetry, every attractor staying
