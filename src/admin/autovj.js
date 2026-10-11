@@ -343,6 +343,11 @@
 
     const fired = tempo.update(audio, now, dt);
     if (fired && tempo.barPosition === 0) barsSince++;
+    /* OSC çıkışı (#437): tempo motorunun vuruşu, ölçüdeki yeri 1..N. Yalnız
+       çıkış açıkken: kapalıyken her vuruşta boşuna IPC olmasın. */
+    if (fired && cfg.oscOut && cfg.oscOut.enabled && window.api && window.api.reportTempoBeat) {
+      window.api.reportTempoBeat({ beat: tempo.barPosition + 1, beatsPerBar: tempo.beatsPerBar });
+    }
 
     if (now - lastBpmPaint > 0.2) {
       lastBpmPaint = now;

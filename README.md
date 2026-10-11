@@ -17,7 +17,7 @@ layers and **40 GPU effects**, an **OBS overlay**, **Spout / Syphon**, **project
 [![Downloads](https://img.shields.io/github/downloads/CaYatur/SoundVisualizer/total?label=downloads)](https://github.com/CaYatur/SoundVisualizer/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-e11d2a.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-111997.svg)](#download)
-[![Tests](https://img.shields.io/badge/tests-2942%20passing-2ea043.svg)](#tests)
+[![Tests](https://img.shields.io/badge/tests-2959%20passing-2ea043.svg)](#tests)
 [![Electron](https://img.shields.io/badge/Electron-43-47848F.svg)](https://www.electronjs.org/)
 
 <a href="https://github.com/CaYatur/SoundVisualizer/releases/latest"><img src="https://img.shields.io/badge/Download-Windows-0a84ff?style=for-the-badge" alt="Download for Windows" /></a>
@@ -721,6 +721,11 @@ says what changed, what comes next, and why nothing can happen when a source is 
 next, previous, random, cut, lock and rating.
 
 **OSC.** A UDP listener with a hand-written OSC 1.0 parser, for TouchOSC, Resolume, Ableton or QLab.
+
+**OSC output** <kbd>3.1.5</kbd>. The other direction: audio levels, kick, snare and hi-hat hits, the
+tempo with a beat clock, and scene, mode and MilkDrop preset changes go out as OSC messages to
+Resolume, TouchDesigner, Max or a lighting desk. It is off by default, sends to this computer until
+you set another target, and refuses to send to its own OSC input, which would loop.
 
 <div align="center">
 
@@ -1625,7 +1630,7 @@ npm test
 npm start -- --smoke
 ```
 
-**2942 unit tests, all passing.** They are written to check answers, not to exercise lines:
+**2959 unit tests, all passing.** They are written to check answers, not to exercise lines:
 
 - **Formulas** are checked against values derived by hand from their definitions — Viviani's curve
   staying on its sphere, the torus tube radius, Chladni's m↔n antisymmetry, every attractor staying

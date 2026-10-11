@@ -937,6 +937,23 @@
     'Bu ortamda Web MIDI kullanılamıyor.': 'Web MIDI is unavailable in this environment.',
     'sinyal bekleniyor…': 'waiting for a signal…', 'mesaj bekleniyor…': 'waiting for a message…',
     'UDP Portu': 'UDP Port',
+    // OSC çıkışı (#437)
+    'OSC Çıkışı': 'OSC Output', 'OSC Çıkışı Etkin': 'OSC Output Enabled',
+    'Ses seviyelerini, davul vuruşlarını, tempoyu ve sahne değişimlerini OSC ile başka yazılımlara gönderin: Resolume, TouchDesigner, Max veya bir ışık masası.':
+      'Send audio levels, drum hits, tempo and scene changes over OSC to other software: Resolume, TouchDesigner, Max or a lighting desk.',
+    'Hedef Port': 'Target Port', 'Seviye Gönderim Hızı (Hz)': 'Level Send Rate (Hz)', 'Adres Öneki': 'Address Prefix',
+    'Ses Seviyeleri': 'Audio Levels', 'Davul Vuruşları': 'Drum Hits',
+    'Tempo ve Vuruş Saati': 'Tempo and Beat Clock', 'Sahne ve Mod Değişimleri': 'Scene and Mode Changes',
+    'Gönderiliyor': 'Sending',
+    'Adres bir IPv4 adresi ya da ana bilgisayar adı olmalı.': 'The address must be an IPv4 address or a host name.',
+    'Hız 1–30 arasında bir tam sayı olmalı.': 'The rate must be a whole number from 1 to 30.',
+    'Önek /cayadev gibi olmalı: en çok dört parça, harf, rakam, - ve _.': 'The prefix must look like /cayadev: up to four parts of letters, digits, - and _.',
+    'Hedef bu bilgisayarın OSC girişi; geri besleme olmasın diye gönderilmiyor. Portu değiştirin.':
+      'The target is this computer\'s OSC input, so nothing is sent, to avoid a feedback loop. Change the port.',
+    'Adresler önekle başlar: /level, /bass, /mid, /treble (0..1); /hit/kick, /hit/snare, /hit/hat (vuruş şiddeti); /tempo/bpm, /tempo/confidence, /tempo/beat (ölçüdeki vuruş ve ölçü uzunluğu); /scene, /visualizer, /background, /milkdrop/preset (adlar).':
+      'Addresses start with the prefix: /level, /bass, /mid, /treble (0..1); /hit/kick, /hit/snare, /hit/hat (hit strength); /tempo/bpm, /tempo/confidence, /tempo/beat (beat in the bar and beats per bar); /scene, /visualizer, /background, /milkdrop/preset (names).',
+    'Ses seviyeleri ve vuruşlar görselleştirici penceresi açıkken gider; tempo ve vuruş saati panelin tempo motorundan gelir.':
+      'Audio levels and hits are sent while a visualizer window is open; tempo and the beat clock come from the panel\'s tempo engine.',
     'OSC gönderen uygulamayı bu bilgisayarın IP adresine ve yukarıdaki porta yöneltin. 0..1 arası değerler doğrudan, 0..127 arası değerler otomatik ölçeklenerek kullanılır.': 'Point the OSC sender at this computer\'s IP address and the port above. Values between 0 and 1 are used directly; values up to 127 are scaled automatically.',
     'Henüz eşleme yok. “Eşleme Ekle” ile başlayın.': 'No mappings yet. Start with "Add Mapping".',
     'Eşleme Ekle': 'Add Mapping', 'Eşlemeyi kaldır': 'Remove mapping',

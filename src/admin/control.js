@@ -23,6 +23,7 @@
   let learning = null; // { surface, id }
   let lastSignal = { midi: '', osc: '' };
   let oscState = { running: false, port: 0, error: null, lastAddress: '' };
+  let oscOutState = { running: false, host: '', port: 0, packets: 0, error: null };
   let started = false;
 
   // Sürülebilir hedefler. Aralıklar panel kaydırıcılarıyla aynı tutuldu ki
@@ -569,6 +570,8 @@
         );
       }
       nodes.push(mappingRows('midi'));
+    } else if (surface === 'oscout') {
+      oscOutNodes(cfg).forEach((n) => nodes.push(n));
     } else {
       const enable = el('input', {
         type: 'checkbox',
@@ -630,6 +633,124 @@
     return el('div', { class: 'control-panel' }, nodes);
   }
 
+  // --------------------------------------------------------------------------
+  // OSC çıkışı (#437)
+  // --------------------------------------------------------------------------
+  /* Ana süreçteki denetimin (src/main/osc-out.js) aynısı; panel geçersiz
+     bir değeri baştan geri çeviriyor ki kullanıcı ne olduğunu görsün. */
+  const OSC_HOST = /^(?=.{1,253}$)[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)*$/;
+  const OSC_PREFIX = /^(\/[A-Za-z0-9_-]{1,32}){0,4}$/;
+
+  function oscOutNodes(cfg) {
+    const el = P().el;
+    const o = cfg.oscOut;
+    const nodes = [];
+    const sync = async () => {
+      P().push(true);
+      try { oscOutState = await window.api.oscOutSync(); } catch { /* servis kapalı */ }
+      P().rerender();
+    };
+    const toggle = (label, key) => {
+      const box = el('input', { type: 'checkbox', onchange: (e) => { o[key] = e.target.checked; sync(); } });
+      box.checked = !!o[key];
+      return P().row(label, el('label', { class: 'switch' }, [box, el('span', { class: 'track' })]));
+    };
+    const text = (value, ok, apply, bad) => el('input', {
+      class: 'p-in', type: 'text', value, spellcheck: 'false', autocomplete: 'off',
+      onchange: (e) => {
+        const v = String(e.target.value).trim();
+        if (!ok(v)) {
+          P().toast(T(bad), 'err');
+          e.target.value = value;
+          return;
+        }
+        apply(v);
+        sync();
+      },
+    });
+
+    nodes.push(toggle('OSC Çıkışı Etkin', 'enabled'));
+    nodes.push(P().row('Hedef Adres', text(o.host, (v) => OSC_HOST.test(v), (v) => { o.host = v; },
+      'Adres bir IPv4 adresi ya da ana bilgisayar adı olmalı.')));
+    nodes.push(P().row('Hedef Port', el('input', {
+      class: 'p-in p-num', type: 'number', min: '1', max: '65535', value: o.port,
+      onchange: (e) => {
+        const port = P().portValue(e.target, o.port, 1);
+        if (port == null) return;
+        o.port = port;
+        sync();
+      },
+    })));
+    nodes.push(P().row('Seviye Gönderim Hızı (Hz)', el('input', {
+      class: 'p-in p-num', type: 'number', min: '1', max: '30', value: o.rate,
+      onchange: (e) => {
+        const n = Number(e.target.value);
+        if (!Number.isInteger(n) || n < 1 || n > 30) {
+          P().toast(T('Hız 1–30 arasında bir tam sayı olmalı.'), 'err');
+          e.target.value = String(o.rate);
+          return;
+        }
+        o.rate = n;
+        sync();
+      },
+    })));
+    nodes.push(P().row('Adres Öneki', text(o.prefix, (v) => OSC_PREFIX.test(v.replace(/\/+$/, '')),
+      (v) => { o.prefix = v.replace(/\/+$/, ''); }, 'Önek /cayadev gibi olmalı: en çok dört parça, harf, rakam, - ve _.')));
+    nodes.push(toggle('Ses Seviyeleri', 'levels'));
+    nodes.push(toggle('Davul Vuruşları', 'hits'));
+    nodes.push(toggle('Tempo ve Vuruş Saati', 'tempo'));
+    nodes.push(toggle('Sahne ve Mod Değişimleri', 'state'));
+
+    const st = oscOutState || {};
+    const stBox = el('label', { class: 'lbl studio-status ' + (st.error ? 'err' : st.running ? 'ok' : '') });
+    if (st.error === 'loop') {
+      stBox.appendChild(el('span', { icon: 'x', text: 'Hedef bu bilgisayarın OSC girişi; geri besleme olmasın diye gönderilmiyor. Portu değiştirin.' }));
+    } else if (st.error) {
+      stBox.appendChild(el('span', { icon: 'x', text: st.error }));
+    } else if (st.running) {
+      stBox.appendChild(el('span', { icon: 'check' }));
+      stBox.appendChild(el('span', { text: 'Gönderiliyor' }));
+      stBox.appendChild(el('span', { class: 'st-num', text: ' ' + st.host + ':' + st.port + ' · ' }));
+      stBox.appendChild(el('span', { id: 'oscOutPackets', class: 'st-num', text: String(st.packets || 0) + ' ' }));
+      stBox.appendChild(el('span', { text: 'paket' }));
+      pollOscOutCount();
+    } else {
+      stBox.appendChild(el('span', { text: 'Kapalı' }));
+    }
+    nodes.push(el('div', { class: 'ctrl' }, [el('div', { class: 'row' }, [stBox])]));
+    nodes.push(el('div', {
+      class: 'studio-note',
+      text: 'Adresler önekle başlar: /level, /bass, /mid, /treble (0..1); /hit/kick, /hit/snare, /hit/hat (vuruş şiddeti); /tempo/bpm, /tempo/confidence, /tempo/beat (ölçüdeki vuruş ve ölçü uzunluğu); /scene, /visualizer, /background, /milkdrop/preset (adlar).',
+    }));
+    nodes.push(el('div', {
+      class: 'studio-note',
+      text: 'Ses seviyeleri ve vuruşlar görselleştirici penceresi açıkken gider; tempo ve vuruş saati panelin tempo motorundan gelir.',
+    }));
+    return nodes;
+  }
+
+  /* Paket sayacı canlı: kart ekrandayken saniyede bir tazelenir, paneli
+     yeniden çizmeden. Kalıcı bir zamanlayıcı yok; sayaç ekrandan kalkınca
+     zincir kendiliğinden durur. */
+  let oscOutPoll = 0;
+  function pollOscOutCount() {
+    if (oscOutPoll || !window.api || !window.api.oscOutStatus) return;
+    const tick = async () => {
+      oscOutPoll = 0;
+      const n = document.getElementById('oscOutPackets');
+      if (!n) return;
+      try {
+        const st = await window.api.oscOutStatus();
+        if (st) {
+          oscOutState = st;
+          n.textContent = String(st.packets || 0) + ' ';
+        }
+      } catch { /* servis kapalı */ }
+      if (!oscOutPoll) oscOutPoll = setTimeout(tick, 1000);
+    };
+    oscOutPoll = setTimeout(tick, 1000);
+  }
+
   async function init() {
     if (started) return;
     started = true;
@@ -638,6 +759,10 @@
     window.api.onOscMessage(onOsc);
     window.api.onOscStatus((s) => { oscState = s; });
     try { oscState = await window.api.oscStatus(); } catch { /* servis kapalı */ }
+    if (window.api.onOscOutStatus) window.api.onOscOutStatus((s) => { oscOutState = s; });
+    if (window.api.oscOutStatus) {
+      try { oscOutState = await window.api.oscOutStatus(); } catch { /* servis kapalı */ }
+    }
   }
 
   window.SVControl = { panel, init, TARGETS, allTargets, mappedValue, runAction };

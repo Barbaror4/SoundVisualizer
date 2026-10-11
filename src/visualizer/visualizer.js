@@ -186,6 +186,10 @@
   let frameAcc = 0; // kare hızı sınırı için birikim sayacı
   let dpr = window.devicePixelRatio || 1;
   let meterT = 0;
+  /* Ölçer iletileri (~30 Hz) arasında görülen en güçlü davul vuruşları
+     (#437). Vuruş tek karelik; 60 fps'te iki iletinin arasına düşen bir
+     vuruş yalnız o anki değere bakılsa kaybolurdu. */
+  const hitLatch = { kick: 0, snare: 0, hat: 0 };
 
   // --------------------------------------------------------------------------
   // Boyutlandırma
@@ -425,6 +429,12 @@
     const t = now / 1000;
 
     audio.update(dt);
+    const hits = audio.analysis && audio.analysis.hits;
+    if (hits) {
+      if (hits.kick > hitLatch.kick) hitLatch.kick = hits.kick;
+      if (hits.snare > hitLatch.snare) hitLatch.snare = hits.snare;
+      if (hits.hat > hitLatch.hat) hitLatch.hat = hits.hat;
+    }
 
     /* Sessizlikte duraklat (güç tasarrufu).
 
@@ -517,7 +527,12 @@
            yazmıyor; panel ekranda ne olduğunu, önizleme ve diğer ekranlar
            da neyi izleyeceğini buradan öğreniyor. */
         mdPreset,
+        // Son iletiden beri görülen en güçlü vuruşlar (OSC çıkışı, #437)
+        hits: { kick: hitLatch.kick, snare: hitLatch.snare, hat: hitLatch.hat },
       });
+      hitLatch.kick = 0;
+      hitLatch.snare = 0;
+      hitLatch.hat = 0;
     }
   }
 

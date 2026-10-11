@@ -17,6 +17,7 @@ const lightingIdentity = require('./lighting-identity');
 const streamServer = require('./stream-server');
 const oscServer = require('./osc-server');
 const artnet = require('./artnet');
+const oscOut = require('./osc-out');
 const openrgb = require('./openrgb');
 const textureShare = require('./texture-share');
 const presetsStore = require('./presets-store');
@@ -2397,6 +2398,7 @@ function applyIncomingConfig(config, opts) {
   syncStreamServer();
   syncOscServer();
   syncArtnet();
+  syncOscOut();
   syncOpenRgb();
   syncTextureShare();
   syncNowPlaying();
@@ -2563,6 +2565,9 @@ ipcMain.on('audio-meter', (e, data) => {
   dynamicLighting.onAudioFrame(data, currentConfig);
   if (currentConfig && currentConfig.artnet && currentConfig.artnet.enabled) {
     artnet.send(currentConfig.artnet, data);
+  }
+  if (currentConfig && currentConfig.oscOut && currentConfig.oscOut.enabled) {
+    oscOut.send(currentConfig.oscOut, data, oscOutContext());
   }
   /* OpenRGB, Dynamic Lighting ile AYNI görünüm ayarlarını kullanır
      (cfg.lighting): iki ayrı ayar olsaydı aynı masadaki iki aygıt iki
@@ -3076,6 +3081,36 @@ function syncArtnet() {
   });
 }
 
+/* OSC çıkışı (#437). OSC girişinin ayarı da veriliyor: hedef bu
+   bilgisayarın OSC girişiyse osc-out.js göndermiyor (geri besleme). Art-Net
+   gibi otomasyonda (HW_OFF) ağa paket gitmiyor. */
+function syncOscOut() {
+  const o = (currentConfig && currentConfig.oscOut) || {};
+  if (!o.enabled || HW_OFF) return oscOut.stop().then(() => oscOut.status());
+  const oscIn = currentConfig.control && currentConfig.control.osc;
+  return oscOut.start(o, oscIn).then((st) => {
+    notifyAdmin('oscout-status', st);
+    return st;
+  });
+}
+
+/* Ana sürecin bildikleri: tempo panelden (mcpLive), sahne adı ve ekrandaki
+   görselleştirici/arkaplan türü ayardan. Yığın açıkken tür ilk görünür
+   katmandan okunuyor (layers.js currentType), Studio ve MCP gibi. */
+function oscOutContext() {
+  const cfg = currentConfig || {};
+  const scene = (cfg.scenes || []).find((s) => s && s.id === cfg._activeSceneId);
+  const L = stackHelpers();
+  const typeOf = (section) => (L ? L.currentType(cfg, section) : cfg[section] && cfg[section].type) || '';
+  return {
+    bpm: mcpLive.bpm,
+    confidence: mcpLive.confidence,
+    scene: scene && typeof scene.name === 'string' ? scene.name : '',
+    visualizer: typeOf('visualizer'),
+    background: typeOf('background'),
+  };
+}
+
 /* Ayarları değişmediyse ve pencere çalışıyorsa yeniden başlatılmaz. Her
    ayar gönderiminde start() çağrılıyordu: pencereye bütün yapılandırma
    kopyalanıp yeniden yollanıyor, söz kitaplığı diskten baştan okunuyordu.
@@ -3252,6 +3287,15 @@ ipcMain.handle('osc:status', () => oscServer.status());
 ipcMain.handle('osc:sync', () => syncOscServer());
 ipcMain.handle('artnet:status', () => artnet.status());
 ipcMain.handle('artnet:sync', () => syncArtnet());
+ipcMain.handle('oscout:status', () => oscOut.status());
+ipcMain.handle('oscout:sync', () => syncOscOut());
+/* Tempo motorunun vuruşu panelden geliyor (autovj.js). Yalnız panel
+   penceresinden kabul edilir: vuruş başka bir sayfadan uydurulamasın. */
+ipcMain.on('tempo:beat', (e, info) => {
+  if (!adminWin || adminWin.isDestroyed() || e.sender !== adminWin.webContents) return;
+  if (!currentConfig || !currentConfig.oscOut || !currentConfig.oscOut.enabled) return;
+  oscOut.beat(currentConfig.oscOut, info);
+});
 ipcMain.handle('openrgb:status', () => openrgb.status());
 ipcMain.handle('openrgb:sync', () => syncOpenRgb({ retry: true }));
 /* Bağlı değilken "Aygıtları Yenile" bağlanmayı yeniden dener: OpenRGB
@@ -4504,6 +4548,7 @@ app.whenReady().then(async () => {
   syncStreamServer().catch(() => {});
   syncOscServer().catch(() => {});
   syncArtnet().catch(() => {});
+  syncOscOut().catch(() => {});
   syncOpenRgb().catch(() => {});
   syncTextureShare().catch(() => {});
 
@@ -6798,6 +6843,7 @@ function shutdownCleanup() {
   streamServer.stop().catch(() => {});
   oscServer.stop().catch(() => {});
   artnet.stop().catch(() => {});
+  oscOut.stop().catch(() => {});
   dynamicLighting.stop().catch(() => {});
   openrgb.stop().catch(() => {});
   textureShare.stop().catch(() => {});

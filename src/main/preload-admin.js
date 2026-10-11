@@ -180,6 +180,11 @@ contextBridge.exposeInMainWorld('api', {
   oscSync: () => ipcRenderer.invoke('osc:sync'),
   onOscMessage: (cb) => ipcRenderer.on('osc-message', (e, m) => cb(m)),
   onOscStatus: (cb) => ipcRenderer.on('osc-status', (e, d) => cb(d)),
+  // OSC çıkışı (#437)
+  oscOutStatus: () => ipcRenderer.invoke('oscout:status'),
+  oscOutSync: () => ipcRenderer.invoke('oscout:sync'),
+  onOscOutStatus: (cb) => ipcRenderer.on('oscout-status', (e, d) => cb(d)),
+  reportTempoBeat: (info) => ipcRenderer.send('tempo:beat', info),
 
   // Güncelleme denetimi (#640)
   updatesState: () => ipcRenderer.invoke('updates:state'),

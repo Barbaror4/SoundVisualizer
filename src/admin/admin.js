@@ -2994,6 +2994,16 @@
         controls: [{ type: 'controlpanel', surface: 'osc' }],
       },
       {
+        id: 'oscOut',
+        category: 'control',
+        icon: 'share',
+        wide: true,
+        title: 'OSC Çıkışı',
+        desc: 'Ses seviyelerini, davul vuruşlarını, tempoyu ve sahne değişimlerini OSC ile başka yazılımlara gönderin: Resolume, TouchDesigner, Max veya bir ışık masası.',
+        roots: ['oscOut'],
+        controls: [{ type: 'controlpanel', surface: 'oscout' }],
+      },
+      {
         id: 'mcp',
         category: 'control',
         icon: 'sliders',
