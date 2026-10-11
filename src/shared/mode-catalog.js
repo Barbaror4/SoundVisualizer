@@ -77,6 +77,7 @@
     V('confetti', 'Konfeti', 'Parçacık ve Olay', { color2: true }),
     V('beatpads', 'Vuruş Pedleri', 'Parçacık ve Olay', { bands: true, gap: true, color2: true }),
     V('bounce', 'Zıplayan Toplar', 'Parçacık ve Olay', { bands: true, gap: true, color2: true }),
+    V('stereotrails', 'Stereo İzler', 'Parçacık ve Olay', { bands: true, wave: true, thick: true, color2: true }),
 
     V('flowfield', 'Akış Alanı', 'Üretken Sistemler'),
     V('flock', 'Sürü', 'Üretken Sistemler'),

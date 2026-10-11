@@ -559,6 +559,7 @@
     'Kardioid': 'Cardioid',
     'Vuruş Pedleri': 'Beat Pads',
     'Zıplayan Toplar': 'Bouncing Balls',
+    'Stereo İzler': 'Stereo Trails',
     'Seviye Ölçer (PPM)': 'Level Meter (PPM)',
     'Su Altı': 'Underwater',
     'Işık Hüzmesi': 'Light Shafts',

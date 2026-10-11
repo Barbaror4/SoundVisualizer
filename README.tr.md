@@ -7,7 +7,7 @@
 ### Sahip olduğunuz her ekran için ücretsiz, açık kaynak müzik görselleştirici ve VJ yazılımı
 
 Bilgisayarınızda ne çalıyorsa — Spotify, YouTube, bir DAW, bir DJ seti, bir oyun — bir ekranda ya
-da on ekranda sese tepki veren görsellere dönüştürür. Gerçek bir **MilkDrop** motoru, **59
+da on ekranda sese tepki veren görsellere dönüştürür. Gerçek bir **MilkDrop** motoru, **60
 görselleştirici modu**, katmanlar ve **40 GPU efekti**, bir **OBS katmanı**, **Spout / Syphon**,
 **projeksiyon haritalama**, **RGB aydınlatma**, canlı gösteriler için **zaman çizelgesi ve klip
 destesi**, ve **MCP üzerinden yapay zekâ kontrolü**.
@@ -18,7 +18,7 @@ destesi**, ve **MCP üzerinden yapay zekâ kontrolü**.
 [![İndirme](https://img.shields.io/github/downloads/CaYatur/SoundVisualizer/total?label=indirme)](https://github.com/CaYatur/SoundVisualizer/releases)
 [![Lisans: MIT](https://img.shields.io/badge/Lisans-MIT-e11d2a.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-111997.svg)](#hızlı-başlangıç)
-[![Test](https://img.shields.io/badge/test-2925%20geçiyor-2ea043.svg)](#testler)
+[![Test](https://img.shields.io/badge/test-2941%20geçiyor-2ea043.svg)](#testler)
 [![Electron](https://img.shields.io/badge/Electron-43-47848F.svg)](https://www.electronjs.org/)
 
 <a href="https://github.com/CaYatur/SoundVisualizer/releases/latest"><img src="https://img.shields.io/badge/%C4%B0ndir-Windows-0a84ff?style=for-the-badge" alt="Windows için indir" /></a>
@@ -40,7 +40,7 @@ destesi**, ve **MCP üzerinden yapay zekâ kontrolü**.
 
 <div align="center">
 
-| **59** görselleştirici modu | **43** arkaplan | **40** GPU efekti | **18** sahne geçişi |
+| **60** görselleştirici modu | **43** arkaplan | **40** GPU efekti | **18** sahne geçişi |
 |:---:|:---:|:---:|:---:|
 | **81** hazır sahne | **98** formül + **13** 3B katı cisim | **42** yerleşik GLSL shader | **58** renk paleti |
 | **10.347** MilkDrop presetiyle sınandı | Yapay zekâ ajanları için **96** MCP aracı | **17** katman karışım kipi | **2** dil (TR / EN) |
@@ -288,7 +288,7 @@ paylaştığı bir BPM kilidiyle.
 
 <div align="center">
 
-**59 görselleştirici modunun hepsi**
+**60 görselleştirici modunun hepsi**
 
 ![Tüm görselleştirici modları](docs/screenshots/modes-visualizer.jpg)
 
@@ -303,7 +303,7 @@ Bu iki pafta doğrudan mod kataloğundan üretiliyor; yeni bir mod, ekran görü
 Her görselleştirici her arkaplanın üzerinde durabilir; katmanlarla her birinden istediğiniz kadar
 üst üste koyabilirsiniz. v3.1.4'ten sonra eklenen modlar <kbd>3.1.5</kbd>'in parçası.
 
-**Görselleştirici modları — 59**
+**Görselleştirici modları — 60**
 
 - **Temel** — Barlar · Merkez · Segment (LED ekolayzer) · Nokta Matris · Şehir Silüeti (pencereleri
   yanan binalar)
@@ -314,7 +314,8 @@ Her görselleştirici her arkaplanın üzerinde durabilir; katmanlarla her birin
   (kutupsal gül eğrisi) · Kaleydoskop · Girdap · Helis · Tünel · Küre · Radar Grafiği
 - **Parçacık ve olay** — Parçacık · Havai Fişek (vuruşta patlamalar) · Şimşek (basta dallanan
   yıldırımlar) · Baloncuk · Sıvı Damla (metatoplar) · Dalgalı Izgara (vuruşta yayılan halkalar) ·
-  Spektrogram · Konfeti · Vuruş Pedleri · Zıplayan Toplar
+  Spektrogram · Konfeti · Vuruş Pedleri · Zıplayan Toplar · Stereo İzler (her bant stereo görüntüdeki
+  yerinden fırlar)
 - **Üretken sistemler** — Akış Alanı (gürültü alanının yönlendirdiği parçacıklar) · Sürü (tayfın sürdüğü
   boid'ler) · Voronoi · Truchet · Moiré · Dalga Girişimi · İpler (vuruşlarla itilen verlet fiziği) ·
   Galaksi · DNA Sarmalı · İzometrik Şehir · Çekici Alanı (formül kitaplığından iki parametresi sese
@@ -1632,7 +1633,7 @@ npm test
 npm start -- --smoke
 ```
 
-**2925 birim testi, hepsi geçiyor.** Satır çalıştırmak için değil, cevap denetlemek için yazıldılar:
+**2941 birim testi, hepsi geçiyor.** Satır çalıştırmak için değil, cevap denetlemek için yazıldılar:
 
 - **Formüller**, tanımlarından elle türetilmiş değerlerle sınanıyor — Viviani eğrisinin küre üzerinde
   kalması, simidin boru yarıçapı, Chladni'nin m↔n antisimetrisi, her çekicinin sınırlı kalması ve görüş
