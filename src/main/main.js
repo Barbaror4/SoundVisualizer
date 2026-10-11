@@ -3148,6 +3148,8 @@ function oscOutContext() {
       timeline: oscLive.timeline === true,
       layers: oscLayers(cfg),
       deck: oscLive.deck,
+      crossfade: cfg.crossfade && Number.isFinite(Number(cfg.crossfade.value)) ? Number(cfg.crossfade.value) : 0,
+      controls: oscOut.controlValues(cfg),
     },
   };
 }

@@ -759,6 +759,8 @@ Vuruş ve saat bundle'ı ana bilgisayar saatinin OSC zaman etiketini taşır. Di
 | `/show/blackout` `/show/autovj` | int | 0 ya da 1 | değişince ve 5 sn'de bir |
 | `/show/palette` `/show/transition` `/show/track` | string | ad | değişince ve 5 sn'de bir |
 | `/show/brightness` | float | panel değeri | arkaplan parlaklığı |
+| `/crossfade` | float | 0..1 | A/B ana karışımı |
+| `/audio/sensitivity` ve diğer panel kaydırıcıları | float ya da int | kaydırıcı aralığı | değişince ve 5 sn'de bir |
 | `/layer/count` | int | 0..32 | değişince |
 | `/layer/N/name` | string | ad | N 1'den başlar |
 | `/layer/N/opacity` | float | 0..1 | değişince |

@@ -754,6 +754,8 @@ time tag of the host clock. Strings are UTF-8.
 | `/show/blackout` `/show/autovj` | int | 0 or 1 | on change, and again every 5 s |
 | `/show/palette` `/show/transition` `/show/track` | string | name | on change, and again every 5 s |
 | `/show/brightness` | float | panel value | background brightness, often around 1 |
+| `/crossfade` | float | 0..1 | the A/B master |
+| `/audio/sensitivity` and the other panel sliders | float or int | the slider range | on change, and again every 5 s |
 | `/layer/count` | int | 0..32 | on change |
 | `/layer/N/name` | string | name | N starts at 1 |
 | `/layer/N/opacity` | float | 0..1 | on change |
