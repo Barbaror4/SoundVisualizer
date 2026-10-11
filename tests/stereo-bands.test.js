@@ -201,7 +201,7 @@ function runTrails(left, right, opts) {
     timeL: L, timeR: R, timeBytes: L, sampleRate: SR, bass: 0,
     getBars: (n) => (o.bars ? Float32Array.from(o.bars) : new Float32Array(n).fill(level)),
   };
-  const cfg = { visualizer: { barCount: 128, minFreq: 20, maxFreq: 20000, sensitivity: 1, thickness: 0.42, lineWidth: 3, glow: 0, colorMode: 'rainbow' } };
+  const cfg = { visualizer: { barCount: 128, minFreq: 20, maxFreq: 20000, sensitivity: 1, thickness: 0.42, lineWidth: 3, glow: 0, colorMode: 'rainbow', trailHeight: o.trailHeight } };
   for (let f = 0; f < (o.frames || 90); f++) {
     segs = [];
     mode.draw(audio, cfg, f / 60, 1 / 60);
@@ -254,6 +254,19 @@ test('Stereo İzler: her bant kendi yerinde — soldaki bas sola, sağdaki tiz s
   const treble = r.segs.filter((s) => highs.includes(s.lw)).map((s) => s.x - r.cx);
   assert.ok(bass.length > 20 && treble.length > 20, bass.length + ' / ' + treble.length);
   assert.ok(mean(bass) < 0 && mean(treble) > 0, 'bas ' + mean(bass) + ', tiz ' + mean(treble));
+});
+
+test('Stereo İzler: yükseklik 1 bugünkü tepeyi korur, üstü ekranın dışına çıkar', () => {
+  const srcL = noise(61);
+  const srcR = noise(62);
+  const base = runTrails(srcL, srcR, { frames: 90 });
+  const same = runTrails(srcL, srcR, { trailHeight: 1, frames: 90 });
+  const high = runTrails(srcL, srcR, { trailHeight: 2.5, frames: 90 });
+  const peak = (r) => Math.min(...r.segs.map((s) => Math.min(s.y0, s.y)));
+  assert.deepStrictEqual(same.segs, base.segs, 'ayar yokken ve 1 iken kare aynı olmalı');
+  assert.ok(high.segs.length > 20 && base.segs.length > 20);
+  // Ekran y'si yukarı küçülür. 2.5 kat, 720p'de tepeyi en az bir ekran boyu yukarı taşır.
+  assert.ok(peak(high) < peak(base) - 720, peak(high) + ' / ' + peak(base));
 });
 
 test('Stereo İzler: seviye getBars\'tan geliyor (tayf ayarları işliyor), sessizlikte çizim yok', () => {

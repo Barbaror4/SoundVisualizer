@@ -1085,6 +1085,8 @@
       const follow = 1 - Math.exp(-step / 0.12);
       const bars = audio.getBars(nb, v.minFreq, v.maxFreq, v.spectrum);
       const power = 0.6 + 0.9 * clamp(v.thickness == null ? 0.42 : v.thickness, 0.1, 1);
+      // 1 bugünkü tepeyi verir (tavan 0.88 ekran). Üstü aynı yayı ekranın dışına taşır.
+      const reach = clamp(v.trailHeight == null ? 1 : v.trailHeight, 0.25, 15);
       const kick = this.onset.push((audio.bass || 0) * sens, step);
       for (let k = 0; k < nb; k++) {
         const f = k / (nb - 1);
@@ -1100,8 +1102,8 @@
           if (burst > 0) burst--;
           else this.acc[k] -= 1;
           const ang = tilt + (this.rand() - 0.5) * (0.14 + this.spread[k] * ST_SCATTER);
-          const h = (0.25 + 0.55 * f) * power * (0.55 + 0.45 * e) * (0.85 + 0.3 * this.rand());
-          this._emit(k, p, ang, Math.min(0.88, h));
+          const h = (0.25 + 0.55 * f) * power * (0.55 + 0.45 * e) * (0.85 + 0.3 * this.rand()) * reach;
+          this._emit(k, p, ang, Math.min(0.88 * reach, h));
         }
       }
 
@@ -1142,7 +1144,7 @@
       tc.lineCap = 'butt';
       toneTable(v, cfg, t, nb, this.cols);
       const cx = W / 2;
-      const floor = H * 0.94;
+      const floor = H;
       const lw = Math.max(1, (v.lineWidth || 3) * 0.8 * (Math.min(W, H) / 1080));
       let start = 0;
       for (let q = 0; q < counts.length; q++) {

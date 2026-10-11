@@ -43,7 +43,7 @@
   // alan ham anahtarıyla görünür — yeni alan eklendiğinde panel bozulmaz.
   const FIELD_LABELS = {
     glow: 'Parlama', opacity: 'Saydamlık', thickness: 'Kalınlık', gap: 'Boşluk',
-    sensitivity: 'Duyarlılık', lineWidth: 'Çizgi Kalınlığı', smoothing: 'Yumuşatma',
+    sensitivity: 'Duyarlılık', lineWidth: 'Çizgi Kalınlığı', trailHeight: 'Yükseklik', smoothing: 'Yumuşatma',
     speed: 'Hız', bright: 'Parlaklık', react: 'Tepki', scale: 'Ölçek', rotate: 'Dönüş',
     spin: 'Dönüş Hızı', tilt: 'Eğim', zoom: 'Yakınlaşma', deform: 'Bozulma',
     alpha: 'Saydamlık', pointSize: 'Nokta Boyutu', resolution: 'Çözünürlük',

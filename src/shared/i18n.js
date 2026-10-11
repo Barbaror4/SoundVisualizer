@@ -2656,6 +2656,7 @@
     'Görselleştirici · Bar Boşluğu': 'Visualizer · Bar Gap',
     'Görselleştirici · Çizgi Kalınlığı': 'Visualizer · Line Width',
     'Görselleştirici · Genlik': 'Visualizer · Amplitude',
+    'Görselleştirici · Yükseklik': 'Visualizer · Height',
     'Arkaplan · Akış Hızı': 'Background · Flow Speed',
     'Arkaplan · Ses Tepkisi': 'Background · Audio Reactivity',
     'Arkaplan · Parlaklık': 'Background · Brightness',

@@ -250,6 +250,7 @@
       gap: 0.36, // barlar arası boşluk oranı
       position: 'center', // 'bottom' | 'center' | 'full' (bars için)
       thickness: 0.42, // dalga/çember için
+      trailHeight: 1, // Stereo İzler tepe çarpanı; 1 bugünkü yükseklik
 
       /* Bar yerleşimi (yayın/müzik videosu düzenleri için).
          null = eski davranış: tam genişlik, position alanının verdiği taban
